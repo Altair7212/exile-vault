@@ -1,0 +1,1298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Exile Vault</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --gold:#c8a96e;--gold-light:#e8d5a3;--gold-dark:#8a6f3a;--gold-dim:#5a4520;
+  --bg:#0a0805;--surface:#100d09;--surface2:#17130e;--surface3:#1e1810;
+  --border:#2a2218;--border-gold:#3d2e14;
+  --text:#c9b99a;--text-muted:#6a5a42;--text-dim:#3a2e1e;
+  --magic:#8888ff;--rare:#ffff77;--unique:#af6025;--gem:#1ba29b;
+  --red:#e74c3c;--blue:#5dade2;--green:#58d68d;
+}
+html,body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:20px}
+
+/* ── HEADER ── */
+header{background:linear-gradient(180deg,#1a1208,#0a0805);border-bottom:1px solid var(--border-gold);padding:10px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:300}
+.logo-name{font-family:'Cinzel',serif;font-size:22px;color:var(--gold);letter-spacing:3px}
+.logo-sub{font-size:12px;color:var(--text-muted);letter-spacing:3px;text-transform:uppercase}
+.source-badge{font-size:13px;color:#1ba29b;border:1px solid #1a3a38;padding:3px 8px;border-radius:2px;background:#0a1a18;letter-spacing:1px}
+
+/* ── CHARACTER TABS (outer) ── */
+.char-tabs{display:flex;gap:0;border-bottom:2px solid var(--border-gold);background:var(--surface);padding:0 24px;overflow:hidden}.char-tabs::-webkit-scrollbar{display:none}
+.char-tab{padding:10px 22px;font-family:'Cinzel',serif;font-size:14px;font-weight:700;letter-spacing:1px;color:#a09070;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all 0.15s;white-space:nowrap;display:flex;flex-direction:column;align-items:center;gap:2px}
+.char-tab .ct-name{font-size:17px;font-weight:900}
+.char-tab .ct-meta{font-size:12px;font-weight:700;letter-spacing:1px;color:#a09070}
+.char-tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+.char-tab:hover:not(.active){color:var(--gold-dark)}
+.char-panel{display:none}.char-panel.active{display:block}
+
+/* ── INNER TABS (Equipment / Skills / Stats) ── */
+.inner-tabs{display:flex;border-bottom:1px solid var(--border-gold);background:var(--surface2);padding:0 24px}
+.inner-tab{padding:9px 18px;font-family:'Cinzel',serif;font-size:14px;font-weight:900;letter-spacing:2px;color:#b8a070;cursor:pointer;border-bottom:2px solid transparent;transition:all 0.15s;text-transform:uppercase}
+.inner-tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+.inner-tab:hover:not(.active){color:var(--gold-dark)}
+.inner-panel{display:none;padding:12px 24px 20px}.inner-panel.active{display:block}#c1-eq,#c2-eq,#c3-eq,#c4-eq{display:none}#c1-eq.active,#c2-eq.active,#c3-eq.active,#c4-eq.active{display:block;position:relative;padding:12px 0 32px;overflow:visible;height:740px}
+
+/* ── STAT BAR ── */
+.stat-bar{background:var(--surface2);border:1px solid var(--border-gold);border-radius:3px;padding:12px 16px;margin-bottom:18px;display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.char-name-big{font-family:'Cinzel',serif;font-size:26px;color:var(--gold-light)}
+.char-sub-text{font-size:13px;color:var(--text-muted);letter-spacing:1px;margin-top:2px}
+.sp{text-align:center;min-width:60px}
+.sp-lbl{font-size:10px;color:var(--text-muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:2px}
+.sp-val{font-family:'Inter',sans-serif;font-variant-numeric:tabular-nums;font-weight:600;font-size:17px;letter-spacing:0}
+.divpipe{width:1px;height:32px;background:var(--border-gold);flex-shrink:0}
+
+/* ── EQUIPMENT GRID ── */
+/* Sizes based on in-game proportions from screenshot */
+/* Tall items (weapon/body/offhand): ~140×230 */
+/* Medium items (helm/gloves/boots): ~110×110 */
+/* Small items (rings/amulet): ~80×80 */
+/* Flask: ~72×110 */
+/* Charm: ~70×70 */
+
+.eq-wrap{padding:0}.eq-box{background:var(--surface2);border:1px solid var(--border-gold);border-radius:4px;padding:10px 16px 28px}
+
+.slot{background:#0a0806;border:1px solid var(--border-gold);border-radius:3px;position:relative;cursor:pointer;display:flex;align-items:center;justify-content:center;overflow:visible;transition:border-color 0.15s;flex-shrink:0}
+.slot:hover{border-color:var(--gold);z-index:100}
+.slot img{object-fit:contain;image-rendering:auto;width:92%;height:92%}
+.slot-label{position:absolute;bottom:-26px;left:50%;transform:translateX(-50%);font-size:14px;color:#9a8a6a;letter-spacing:1.5px;white-space:nowrap;text-transform:uppercase;font-family:'Cinzel',serif;font-weight:700}
+.c-tl,.c-tr,.c-bl,.c-br{position:absolute;width:8px;height:8px;border-color:var(--gold-dim);border-style:solid;pointer-events:none}
+.c-tl{top:-1px;left:-1px;border-width:1px 0 0 1px}
+.c-tr{top:-1px;right:-1px;border-width:1px 1px 0 0}
+.c-bl{bottom:-1px;left:-1px;border-width:0 0 1px 1px}
+.c-br{bottom:-1px;right:-1px;border-width:0 1px 1px 0}
+.rarity-rare{border-color:#555500}.rarity-rare:hover{border-color:var(--rare)}
+.rarity-unique{border-color:#6b3010}.rarity-unique:hover{border-color:var(--unique)}
+.rarity-magic{border-color:#333388}.rarity-magic:hover{border-color:var(--magic)}
+.slot-tall{width:99px;height:198px}
+.slot-med{width:97px;height:97px}
+.slot-sm{width:68px;height:68px}
+.slot-flask{width:61px;height:97px}
+.slot-charm{width:66px;height:66px;opacity:0.4}
+.slot-charm-empty{width:59px;height:59px;background:#0a0806;border:1px dashed #3d2e14;border-radius:3px;display:flex;align-items:center;justify-content:center;opacity:0.35}
+
+/* Tooltip */
+.tooltip{display:none !important}
+/* item tooltips handled by JS follower */
+.tt-name{font-family:'Cinzel',serif;font-size:18px;font-weight:500;margin-bottom:2px;text-align:center}
+.tt-type{font-size:13px;color:var(--text-muted);text-align:center;margin-bottom:5px}
+.tt-sep{height:1px;background:var(--border-gold);margin:5px 0}
+.tt-mod{font-size:14px;color:#88ccff;line-height:1.65}
+.tt-implicit{font-size:14px;color:var(--text);line-height:1.65}
+.tt-rune-sep{height:1px;background:linear-gradient(90deg,transparent,#8ba8c8,transparent);margin:6px 0}
+.tt-rune{font-size:13px;color:#a8c8e8;line-height:1.65}
+.tt-rune-label{font-size:11px;color:#7a9ab8;letter-spacing:1.5px;text-transform:uppercase;margin-top:2px;margin-bottom:3px}
+.tt-stat{font-size:14px;color:#d4c99a;line-height:1.65}.tt-stat span{color:var(--text);font-weight:500}
+.tt-prop{font-size:14px;color:#d4c99a;line-height:1.65}
+.rune-socket-row{display:flex;align-items:center;gap:6px;margin-top:6px;padding-top:4px;flex-wrap:wrap}
+.rune-pip{width:20px;height:20px;border-radius:3px;border:1px solid #5a7a9a;background:#0d1520;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.rune-pip img{width:16px;height:16px;object-fit:contain}
+.rune-pip.empty{border:1px dashed #3a5a7a;opacity:0.5}
+.rune-bonded{font-size:12px;color:#c8d8e8;background:rgba(80,120,160,0.12);border:1px solid rgba(80,120,160,0.25);border-radius:3px;padding:3px 7px;margin-top:4px;line-height:1.6}
+.rune-bonded-label{color:#7a9ab8;font-size:11px;letter-spacing:1px;text-transform:uppercase}
+.tt-prop{font-size:14px;color:#aaa;line-height:1.65}
+.tt-rare{color:var(--rare)}.tt-unique{color:var(--unique)}.tt-magic{color:var(--magic)}
+
+/* ── SKILLS ── */
+.skills-grid{display:flex;flex-direction:column;gap:8px}
+.sec-sep{font-size:13px;color:var(--gold-dim);letter-spacing:3px;text-transform:uppercase;padding:8px 0 4px;border-bottom:1px solid var(--border);font-family:'Cinzel',serif;margin-bottom:2px}
+.sk-card{background:var(--surface2);border:1px solid var(--border-gold);border-radius:3px;overflow:visible}
+.sk-header{display:flex;align-items:center;gap:10px;padding:9px 12px;cursor:pointer}
+.sk-header:hover{background:var(--surface3)}
+.sk-icon{width:40px;height:40px;border-radius:3px;border:1px solid var(--border-gold);flex-shrink:0;object-fit:contain;background:var(--surface3)}
+.sk-name{font-family:'Cinzel',serif;font-size:17px;color:var(--gold-light);margin-bottom:2px}
+.sk-tags{font-size:13px;color:var(--text-muted);letter-spacing:1px}
+.sk-dps{font-size:17px;font-weight:500;flex-shrink:0;text-align:right}
+.sk-spirit{font-size:13px;color:var(--text-muted);text-align:right}
+.sk-lvl{font-size:13px;background:var(--surface3);border:1px solid var(--border-gold);padding:2px 6px;border-radius:2px;color:var(--gold);flex-shrink:0;font-family:'Cinzel',serif}
+.sk-arrow{font-size:13px;color:var(--text-muted);transition:transform 0.2s;margin-left:2px}
+.sk-card.open .sk-arrow{transform:rotate(180deg)}
+.sk-body{display:none;padding:0 12px 12px;border-top:1px solid var(--border)}
+.sk-card.open .sk-body{display:block}
+.sk-inner{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px}
+.sup-list{display:flex;flex-direction:column;gap:5px}
+.sup-item{display:flex;align-items:flex-start;gap:8px;background:var(--surface3);border-radius:2px;padding:5px 8px;border-left:2px solid var(--gem)}
+.sup-icon{width:36px;height:36px;object-fit:contain;flex-shrink:0;margin-top:0;cursor:pointer;border-radius:3px;border:1px solid var(--border-gold)}
+.sup-name{font-size:14px;color:var(--gem);font-family:'Cinzel',serif}
+.sup-desc{font-size:13px;color:var(--text-muted);line-height:1.5;margin-top:1px}
+.stats-box{background:var(--surface3);border-radius:2px;padding:8px 10px}
+.stat-row{display:flex;justify-content:space-between;font-size:14px;padding:2px 0;border-bottom:1px solid var(--border)}
+.stat-row:last-child{border-bottom:none}
+.stat-lbl{color:var(--text-muted)}
+.stat-val{color:#88ccff}
+.dmg-bar{display:flex;height:5px;border-radius:2px;overflow:hidden;margin-top:6px}
+.spirit-bar-wrap{background:var(--surface2);border:1px solid var(--border-gold);border-radius:3px;padding:10px 14px;margin-top:10px}
+.spirit-track{display:flex;gap:1px;height:7px;border-radius:3px;overflow:hidden;background:var(--surface3);margin:5px 0 3px}
+
+/* ── STATS PANEL ── */
+.stats-section-title{font-family:'Cinzel',serif;font-size:12px;color:var(--gold-dim);letter-spacing:3px;text-transform:uppercase;padding-bottom:6px;border-bottom:1px solid var(--border);margin-bottom:10px}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-bottom:16px}
+.stat-card{background:var(--surface2);border:1px solid var(--border-gold);border-radius:3px;padding:10px 12px;text-align:center}
+.stat-card-label{font-size:10px;color:var(--text-muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px}
+.stat-card-val{font-family:'Inter',sans-serif;font-variant-numeric:tabular-nums;font-weight:300;font-size:20px;letter-spacing:0.5px}
+.warn-box{background:#1a0808;border:1px solid #3a1515;border-radius:2px;padding:8px 12px;font-size:14px;color:#c0392b;margin-top:6px}
+
+
+/* Gem hover tooltip */
+.sup-item{position:relative}
+.gem-tooltip{display:none !important}
+/* gem-tooltip triggered by JS on icon hover only */
+.gem-tt-name{font-family:'Cinzel',serif;font-size:16px;color:#1ba29b;margin-bottom:2px}
+.gem-tt-type{font-size:13px;color:var(--text-muted);margin-bottom:5px}
+.gem-tt-sep{height:1px;background:#1a3a38;margin:5px 0}
+.gem-tt-desc{color:var(--text);font-size:14px;line-height:1.7;margin-bottom:4px}
+.gem-tt-stat{color:#88ccff;font-size:14px;line-height:1.65}
+
+/* Skill card hover tooltip */
+.sk-card{position:relative}
+/* sk-tooltip hidden — content read by JS into global follower */
+.sk-tooltip{display:none !important}
+#sk-follower{
+  display:none;
+  position:fixed;
+  z-index:9999;
+  background:#0d0b08;
+  border:1px solid var(--border-gold);
+  border-radius:3px;
+  padding:12px 14px;
+  min-width:340px;max-width:480px;
+  font-family:'Inter',sans-serif;font-size:12px;
+  pointer-events:none;
+  line-height:1.7;
+  box-shadow:0 4px 24px rgba(0,0,0,0.7);
+}
+.sk-tt-name{font-family:'Cinzel',serif;font-size:19px;color:var(--gold-light);margin-bottom:3px}
+.sk-tt-type{font-size:14px;color:var(--text-muted);margin-bottom:6px}
+.sk-tt-sep{height:1px;background:var(--border-gold);margin:6px 0}
+.sk-tt-desc{color:var(--text);font-size:15px;line-height:1.7;margin-bottom:4px}
+.sk-tt-mod{color:#88ccff;font-size:15px;line-height:1.7}
+.sk-tt-tag{display:inline-block;background:var(--surface3);border:1px solid var(--border);border-radius:2px;font-size:13px;color:var(--text-muted);padding:1px 6px;margin:2px 2px 0 0;letter-spacing:1px}
+
+#gem-follower{
+  display:none;
+  position:fixed;
+  z-index:9998;
+  background:#0d0b08;
+  border:1px solid #1ba29b;
+  border-radius:3px;
+  padding:10px 13px;
+  min-width:300px;max-width:420px;
+  font-family:'Inter',sans-serif;
+  font-size:11px;line-height:1.7;
+  pointer-events:none;
+  box-shadow:0 4px 24px rgba(0,0,0,0.7);
+  white-space:normal;
+}
+.num{font-family:'Inter',sans-serif;font-variant-numeric:tabular-nums;font-weight:300;letter-spacing:0.5px}
+
+#item-follower{
+  display:none;
+  position:fixed;
+  z-index:9997;
+  background:#0d0b08;
+  border:1px solid var(--border-gold);
+  border-radius:3px;
+  padding:10px 13px;
+  min-width:250px;max-width:360px;
+  pointer-events:none;
+  font-family:'Inter',sans-serif;
+  font-size:13px;
+  box-shadow:0 4px 24px rgba(0,0,0,0.8);
+}
+
+/* ── ADMIN PANEL ── */
+#admin-btn{position:fixed;bottom:18px;right:18px;width:36px;height:36px;border-radius:50%;background:#1a1208;border:1px solid #3d2e14;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:400;opacity:0.4;transition:opacity 0.2s}
+#admin-btn:hover{opacity:1}
+#admin-btn svg{width:18px;height:18px;fill:#be9e58}
+#admin-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:500;align-items:center;justify-content:center}
+#admin-overlay.open{display:flex}
+#admin-panel{background:#0d0b08;border:1px solid var(--border-gold);border-radius:6px;width:min(720px,95vw);max-height:90vh;display:flex;flex-direction:column;overflow:hidden}
+#admin-header{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--border-gold);flex-shrink:0}
+#admin-header h2{font-family:'Cinzel',serif;font-size:16px;color:var(--gold);letter-spacing:2px;margin:0}
+#admin-close{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:20px;line-height:1;padding:0}
+#admin-close:hover{color:var(--gold)}
+#admin-login{padding:32px;display:flex;flex-direction:column;align-items:center;gap:16px}
+#admin-login p{color:var(--text-muted);font-size:13px;letter-spacing:1px;text-transform:uppercase}
+#admin-login input{background:#0a0805;border:1px solid var(--border-gold);color:var(--text);padding:10px 16px;border-radius:3px;font-size:14px;width:240px;outline:none;font-family:'Inter',sans-serif}
+#admin-login input:focus{border-color:var(--gold)}
+#admin-login button{background:var(--border-gold);color:#0a0805;border:none;padding:9px 28px;border-radius:3px;font-family:'Cinzel',serif;font-size:13px;font-weight:700;letter-spacing:1px;cursor:pointer}
+#admin-login button:hover{background:var(--gold-light)}
+#admin-login .err{color:#e74c3c;font-size:12px;display:none}
+#admin-body{display:none;flex-direction:column;flex:1;overflow:hidden}
+#admin-tabs{display:flex;border-bottom:1px solid var(--border-gold);flex-shrink:0}
+.admin-tab{padding:10px 20px;font-family:'Cinzel',serif;font-size:13px;font-weight:700;letter-spacing:1px;color:var(--text-muted);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.15s}
+.admin-tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+#admin-content{flex:1;overflow-y:auto;padding:20px}
+.admin-section{display:none}.admin-section.active{display:block}
+.admin-section h3{font-family:'Cinzel',serif;font-size:13px;color:var(--gold);letter-spacing:1px;margin:0 0 8px;text-transform:uppercase}
+.admin-section p{font-size:12px;color:var(--text-muted);margin:0 0 12px;line-height:1.6}
+.admin-textarea{width:100%;height:180px;background:#080605;border:1px solid #3d2e14;color:#8899aa;padding:10px;font-family:'Courier New',monospace;font-size:11px;border-radius:3px;resize:vertical;outline:none;box-sizing:border-box}
+.admin-textarea:focus{border-color:var(--border-gold)}
+.admin-actions{display:flex;gap:10px;margin-top:12px;align-items:center;flex-wrap:wrap}
+.admin-btn-primary{background:var(--border-gold);color:#0a0805;border:none;padding:8px 22px;border-radius:3px;font-family:'Cinzel',serif;font-size:12px;font-weight:700;letter-spacing:1px;cursor:pointer}
+.admin-btn-primary:hover{background:var(--gold-light)}
+.admin-btn-secondary{background:transparent;color:var(--text-muted);border:1px solid #3d2e14;padding:8px 16px;border-radius:3px;font-family:'Cinzel',serif;font-size:12px;cursor:pointer}
+.admin-btn-secondary:hover{border-color:var(--border-gold);color:var(--gold)}
+.admin-status{font-size:12px;padding:6px 12px;border-radius:3px;display:none}
+.admin-status.ok{background:rgba(39,174,96,0.15);color:#2ecc71;border:1px solid rgba(39,174,96,0.3);display:inline-block}
+.admin-status.err{background:rgba(231,76,60,0.15);color:#e74c3c;border:1px solid rgba(231,76,60,0.3);display:inline-block}
+.admin-preview{margin-top:16px;padding:12px;background:#080605;border:1px solid #3d2e14;border-radius:3px;display:none}
+.admin-preview h4{font-family:'Cinzel',serif;font-size:11px;color:var(--gold);letter-spacing:1px;margin:0 0 10px;text-transform:uppercase}
+.preview-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
+.preview-item{font-size:12px;color:var(--text-muted)}.preview-item span{color:var(--text)}
+.admin-divider{height:1px;background:var(--border);margin:20px 0}
+</style>
+</head>
+
+<body>
+
+<header>
+  <div style="display:flex;align-items:center;gap:14px">
+    <svg width="36" height="36" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0">
+      <g fill="#be9e58">
+        <!-- Gear: outer teeth ring via clip approach — simple polygon star shape -->
+        <!-- 8 teeth -->
+        <path d="M18 2 L20 7 L22.5 5.5 L22 11 L27 10 L25 15 L30 16.5 L26 20 L29 24.5 L24 24 L23.5 29 L19 27 L18 32 L17 27 L12.5 29 L12 24 L7 24.5 L10 20 L6 16.5 L11 15 L9 10 L14 11 L13.5 5.5 L16 7 Z" opacity="0.95"/>
+        <!-- Inner hole (cutout) -->
+        <circle cx="18" cy="18" r="7" fill="#0a0805"/>
+        <!-- Inner ring -->
+        <circle cx="18" cy="18" r="5.5" fill="none" stroke="#be9e58" stroke-width="1.5"/>
+        <!-- Center dot -->
+        <circle cx="18" cy="18" r="2" fill="#be9e58"/>
+      </g>
+    </svg>
+    <div>
+      <div class="logo-name">EXILE VAULT</div>
+      <div class="logo-sub">Path of Exile 2 · Build Tracker</div>
+    </div>
+  </div>
+</header>
+
+<!-- ═══════════════════════════════════════════
+     CHARACTER TABS (outer level)
+═══════════════════════════════════════════ -->
+<div class="char-tabs">
+  <div class="char-tab active" onclick="switchChar('c1',this)">
+    <span class="ct-name">PJ 1</span>
+    <span class="ct-meta">— Sin datos —</span>
+  </div>
+  <div class="char-tab" onclick="switchChar('c2',this)">
+    <span class="ct-name">PJ 2</span>
+    <span class="ct-meta">— Sin datos —</span>
+  </div>
+  <div class="char-tab" onclick="switchChar('c3',this)">
+    <span class="ct-name">PJ 3</span>
+    <span class="ct-meta">— Sin datos —</span>
+  </div>
+  <div class="char-tab" onclick="switchChar('c4',this)">
+    <span class="ct-name">PJ 4</span>
+    <span class="ct-meta">— Sin datos —</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     CHARACTER 1: TorukZhakto
+═══════════════════════════════════════════ -->
+
+<!-- ═══════════════════════════════════════════
+     CHARACTER 1: PJ 1
+═══════════════════════════════════════════ -->
+<div id="c1" class="char-panel active">
+  <div class="inner-tabs">
+    <div class="inner-tab active" onclick="switchInner('c1','eq',this)">Equipment</div>
+    <div class="inner-tab" onclick="switchInner('c1','sk',this)">Skills</div>
+    <div class="inner-tab" onclick="switchInner('c1','st',this)">Stats</div>
+  </div>
+
+  <div id="c1-eq" class="inner-panel active">
+    </div>
+
+  <div id="c1-sk" class="inner-panel">
+    </div>
+
+  <div id="c1-st" class="inner-panel">
+    </div>
+
+</div><!-- /c1 -->
+
+<!-- ═══════════════════════════════════════════
+     CHARACTER 2: PJ 2
+═══════════════════════════════════════════ -->
+<div id="c2" class="char-panel">
+  <div class="inner-tabs">
+    <div class="inner-tab active" onclick="switchInner('c2','eq',this)">Equipment</div>
+    <div class="inner-tab" onclick="switchInner('c2','sk',this)">Skills</div>
+    <div class="inner-tab" onclick="switchInner('c2','st',this)">Stats</div>
+  </div>
+
+  <div id="c2-eq" class="inner-panel active">
+    </div>
+
+  <div id="c2-sk" class="inner-panel">
+    </div>
+
+  <div id="c2-st" class="inner-panel">
+    </div>
+
+</div><!-- /c2 -->
+
+<!-- ═══════════════════════════════════════════
+     CHARACTER 3: PJ 3
+═══════════════════════════════════════════ -->
+<div id="c3" class="char-panel">
+  <div class="inner-tabs">
+    <div class="inner-tab active" onclick="switchInner('c3','eq',this)">Equipment</div>
+    <div class="inner-tab" onclick="switchInner('c3','sk',this)">Skills</div>
+    <div class="inner-tab" onclick="switchInner('c3','st',this)">Stats</div>
+  </div>
+
+  <div id="c3-eq" class="inner-panel active">
+    </div>
+
+  <div id="c3-sk" class="inner-panel">
+    </div>
+
+  <div id="c3-st" class="inner-panel">
+    </div>
+
+</div><!-- /c3 -->
+
+<!-- ═══════════════════════════════════════════
+     CHARACTER 4: PJ 4
+═══════════════════════════════════════════ -->
+<div id="c4" class="char-panel">
+  <div class="inner-tabs">
+    <div class="inner-tab active" onclick="switchInner('c4','eq',this)">Equipment</div>
+    <div class="inner-tab" onclick="switchInner('c4','sk',this)">Skills</div>
+    <div class="inner-tab" onclick="switchInner('c4','st',this)">Stats</div>
+  </div>
+
+  <div id="c4-eq" class="inner-panel active">
+    </div>
+
+  <div id="c4-sk" class="inner-panel">
+    </div>
+
+  <div id="c4-st" class="inner-panel">
+    </div>
+
+</div><!-- /c4 -->
+
+
+<!-- Item tooltip follower -->
+<div id="item-follower"></div>
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+(function(){
+  var itf = document.getElementById('item-follower');
+  if(!itf) return;
+  function onItemMove(e){
+    var x = e.clientX + 18, y = e.clientY + 8;
+    var fw = itf.offsetWidth || 280, fh = itf.offsetHeight || 150;
+    if(x + fw > window.innerWidth - 8) x = e.clientX - fw - 18;
+    if(y + fh > window.innerHeight - 8) y = window.innerHeight - fh - 8;
+    if(y < 8) y = 8;
+    itf.style.left = x + 'px'; itf.style.top = y + 'px';
+  }
+  document.addEventListener('mouseover', function(e){
+    var slot = e.target.closest('.slot');
+    if(!slot) return;
+    var tip = slot.querySelector('.tooltip');
+    if(!tip) return;
+    itf.innerHTML = tip.innerHTML;
+    itf.style.display = 'block';
+    onItemMove(e);
+  });
+  document.addEventListener('mousemove', function(e){
+    if(itf.style.display === 'block' && e.target.closest('.slot')) onItemMove(e);
+  });
+  document.addEventListener('mouseout', function(e){
+    if(e.target.closest('.slot')) itf.style.display = 'none';
+  });
+})();
+}); // DOMContentLoaded
+</script>
+
+
+
+
+
+<!-- ══ ADMIN BUTTON ══ -->
+<button id="admin-btn" title="Admin Panel" onclick="adminOpen()">
+  <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+    <path d="M12 15.5A3.5 3.5 0 018.5 12 3.5 3.5 0 0112 8.5a3.5 3.5 0 013.5 3.5 3.5 3.5 0 01-3.5 3.5m7.43-2.92c.04-.34.07-.69.07-1.08s-.03-.74-.07-1.08l2.32-1.82c.21-.16.27-.46.13-.7l-2.2-3.81c-.14-.24-.42-.32-.66-.24l-2.73 1.1c-.57-.43-1.18-.79-1.85-1.07L14 2.42C13.96 2.18 13.74 2 13.5 2h-3c-.24 0-.46.18-.5.42l-.44 2.46c-.67.28-1.28.64-1.85 1.07L4.98 4.85c-.24-.08-.52 0-.66.24l-2.2 3.81c-.14.24-.08.54.13.7l2.32 1.82c-.04.34-.07.69-.07 1.08s.03.74.07 1.08L2.25 15.4c-.21.16-.27.46-.13.7l2.2 3.81c.14.24.42.32.66.24l2.73-1.1c.57.43 1.18.79 1.85 1.07l.44 2.46c.04.24.26.42.5.42h3c.24 0 .46-.18.5-.42l.44-2.46c.67-.28 1.28-.64 1.85-1.07l2.73 1.1c.24.08.52 0 .66-.24l2.2-3.81c.14-.24.08-.54-.13-.7l-2.32-1.82z"/>
+  </svg>
+</button>
+
+<!-- ══ ADMIN OVERLAY ══ -->
+<div id="admin-overlay" onclick="adminBgClose(event)">
+  <div id="admin-panel">
+    <div id="admin-header">
+      <h2>⚙ EXILE VAULT · Admin</h2>
+      <button id="admin-close" onclick="adminClose()">✕</button>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="admin-login">
+      <p>Contraseña de acceso</p>
+      <input type="password" id="admin-pwd" placeholder="••••••••" onkeydown="if(event.key==='Enter')adminLogin()">
+      <button onclick="adminLogin()">Acceder</button>
+      <span class="err" id="admin-err">Contraseña incorrecta</span>
+    </div>
+
+    <!-- PANEL -->
+    <div id="admin-body">
+      <div id="admin-tabs">
+        <div class="admin-tab active" onclick="adminTab(0,this)">PJ 1</div>
+        <div class="admin-tab" onclick="adminTab(1,this)">PJ 2</div>
+        <div class="admin-tab" onclick="adminTab(2,this)">PJ 3</div>
+        <div class="admin-tab" onclick="adminTab(3,this)">PJ 4</div>
+      </div>
+      <div id="admin-content">
+
+        <!-- CHAR 1 -->
+        <div class="admin-section active" id="adm-0">
+          <h3>Actualizar TorukZhakto</h3>
+          <p>Pega aquí el JSON completo del personaje obtenido de la API. Se actualizarán automáticamente: nivel, stats defensivos (Life, ES, Mana, Spirit), resistencias y la pestaña Stats del personaje.</p>
+          <textarea class="admin-textarea" id="json-0" placeholder='{"type":"found","charModel":{...}}'></textarea>
+          <div class="admin-actions">
+            <button class="admin-btn-primary" onclick="adminParse(0)">Aplicar JSON</button>
+            <button class="admin-btn-secondary" onclick="adminClear(0)">Limpiar</button>
+            <button class="admin-btn-secondary" onclick="adminClearSave(0)" style="color:#e74c3c;border-color:#5a2020">✕ Borrar guardado</button>
+            <span class="admin-status" id="status-0"></span>
+          </div>
+          <div class="admin-preview" id="preview-0">
+            <h4>Vista previa de cambios</h4>
+            <div class="preview-grid" id="preview-grid-0"></div>
+          </div>
+        </div>
+
+        <!-- CHAR 2 -->
+        <div class="admin-section" id="adm-1">
+          <h3>Actualizar JadeCane</h3>
+          <p>Pega aquí el JSON completo del personaje. Se actualizarán automáticamente: nivel, stats defensivos y resistencias.</p>
+          <textarea class="admin-textarea" id="json-1" placeholder='{"type":"found","charModel":{...}}'></textarea>
+          <div class="admin-actions">
+            <button class="admin-btn-primary" onclick="adminParse(1)">Aplicar JSON</button>
+            <button class="admin-btn-secondary" onclick="adminClear(1)">Limpiar</button>
+            <button class="admin-btn-secondary" onclick="adminClearSave(1)" style="color:#e74c3c;border-color:#5a2020">✕ Borrar guardado</button>
+            <span class="admin-status" id="status-1"></span>
+          </div>
+          <div class="admin-preview" id="preview-1">
+            <h4>Vista previa de cambios</h4>
+            <div class="preview-grid" id="preview-grid-1"></div>
+          </div>
+        </div>
+
+        <!-- CHAR 3 -->
+        <div class="admin-section" id="adm-2">
+          <h3>Actualizar TheIrrepressible</h3>
+          <p>Pega aquí el JSON completo del personaje. Se actualizarán automáticamente: nivel, stats defensivos y resistencias.</p>
+          <textarea class="admin-textarea" id="json-2" placeholder='{"type":"found","charModel":{...}}'></textarea>
+          <div class="admin-actions">
+            <button class="admin-btn-primary" onclick="adminParse(2)">Aplicar JSON</button>
+            <button class="admin-btn-secondary" onclick="adminClear(2)">Limpiar</button>
+            <button class="admin-btn-secondary" onclick="adminClearSave(2)" style="color:#e74c3c;border-color:#5a2020">✕ Borrar guardado</button>
+            <span class="admin-status" id="status-2"></span>
+          </div>
+          <div class="admin-preview" id="preview-2">
+            <h4>Vista previa de cambios</h4>
+            <div class="preview-grid" id="preview-grid-2"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+<div id="sk-follower"></div>
+<div id="gem-follower"></div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+(function(){
+  // ── Skill tooltip follower ──
+  var sf = document.getElementById('sk-follower');
+  if(!sf) return;
+  function onSkMove(e){
+    var x = e.clientX + 18, y = e.clientY + 8;
+    var fw = sf.offsetWidth||380, fh = sf.offsetHeight||200;
+    if(x + fw > window.innerWidth - 8) x = e.clientX - fw - 18;
+    if(y + fh > window.innerHeight - 8) y = window.innerHeight - fh - 8;
+    sf.style.left = x+'px'; sf.style.top = y+'px';
+  }
+  document.addEventListener('mouseover', function(e){
+    var icon = e.target.closest('.sk-icon');
+    if(!icon) return;
+    var card = icon.closest('.sk-card');
+    if(!card) return;
+    var tip = card.querySelector('.sk-tooltip');
+    if(!tip) return;
+    sf.innerHTML = tip.innerHTML;
+    sf.style.display = 'block';
+    onSkMove(e);
+  });
+  document.addEventListener('mousemove', function(e){
+    if(sf.style.display==='block' && e.target.closest('.sk-icon')) onSkMove(e);
+  });
+  document.addEventListener('mouseout', function(e){
+    if(e.target.closest('.sk-icon')) sf.style.display = 'none';
+  });
+
+  // ── Gem tooltip follower ──
+  var gf = document.getElementById('gem-follower');
+  function onGemMove(e){
+    var x = e.clientX + 18, y = e.clientY + 8;
+    var fw = gf.offsetWidth||320, fh = gf.offsetHeight||150;
+    if(x + fw > window.innerWidth - 8) x = e.clientX - fw - 18;
+    if(y + fh > window.innerHeight - 8) y = window.innerHeight - fh - 8;
+    gf.style.left = x+'px'; gf.style.top = y+'px';
+  }
+  document.addEventListener('mouseover', function(e){
+    var icon = e.target.closest('.sup-icon');
+    if(!icon) return;
+    var item = icon.closest('.sup-item');
+    if(!item) return;
+    var tip = item.querySelector('.gem-tooltip');
+    if(!tip) return;
+    gf.innerHTML = tip.innerHTML;
+    gf.style.display = 'block';
+    onGemMove(e);
+  });
+  document.addEventListener('mousemove', function(e){
+    if(gf.style.display==='block' && e.target.closest('.sup-icon')) onGemMove(e);
+  });
+  document.addEventListener('mouseout', function(e){
+    if(e.target.closest('.sup-icon')) gf.style.display = 'none';
+  });
+})();
+}); // DOMContentLoaded
+</script>
+
+
+<script>
+
+// ════════════════════════════════════════════════════
+// EXILE VAULT — JSON RENDERER ENGINE
+// Parses PoE2 API JSON and rebuilds Equipment + Skills panels
+// ════════════════════════════════════════════════════
+
+window.EV = (function(){
+
+  // ── Helpers ──────────────────────────────────────
+  function n(v){ return (v||0).toLocaleString('es-ES'); }
+  function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function pct(v){ return (v>0?'+':'')+v+'%'; }
+
+  var RES_COLOR = { fire:'#e67e22', cold:'#5dade2', lightning:'var(--rare)', chaos:'var(--red)' };
+
+  function resColor(type, val){
+    if(RES_COLOR[type]) return RES_COLOR[type];
+    return val>0?'var(--green)':val<0?'var(--red)':'var(--text)';
+  }
+
+  // Slot maps: inventoryId → grid position config
+  var SLOT_MAP = {
+    'Helm':      { col:3, row:1, size:'med', label:'Helmet', align:'end' },
+    'Weapon':    { col:1, row:2, size:'tall', label:'Weapon' },
+    'BodyArmour':{ col:3, row:2, size:'tall', label:'Body Armour' },
+    'Offhand':   { col:5, row:2, size:'tall', label:'Off-hand' },
+    'Gloves':    { col:1, row:3, size:'med', label:'Gloves' },
+    'Belt':      { col:3, row:3, size:'belt', label:'Belt' },
+    'Boots':     { col:5, row:3, size:'med', label:'Boots' },
+    'Ring':      null, // handled separately (Ring1/Ring2)
+    'Ring2':     null,
+    'Amulet':    null,
+    'Flask':     null, // handled separately
+  };
+
+  // Rarity class
+  function rarityClass(frameType){
+    if(frameType===3) return 'rarity-unique';
+    if(frameType===2 || frameType===6) return 'rarity-rare'; // runic=rare visual
+    if(frameType===1) return 'rarity-magic';
+    return '';
+  }
+
+  // ── Rune block HTML ──────────────────────────────
+  function runeBlock(item){
+    if(!item.runeMods || item.runeMods.length===0) return '';
+    var html = '<div class="tt-rune-sep"></div><div class="rune-socket-row">';
+    // Icons for socketed runes
+    var socketed = item.socketedItems || [];
+    socketed.filter(function(s){ return s.frameType===5 || (s.baseType&&s.baseType.toLowerCase().indexOf('rune')>-1); }).forEach(function(rune){
+      html += '<div class="rune-pip"><img src="'+esc(rune.icon||'')+'" onerror="this.style.opacity=0.3"></div>';
+    });
+    // Rune count label
+    var runeCount = socketed.filter(function(s){ return s.baseType&&s.baseType.toLowerCase().indexOf('rune')>-1; }).length;
+    if(runeCount===0) runeCount = item.runeMods.length;
+    var runeName = socketed.length>0 ? (socketed[0].baseType||'Rune') : 'Rune';
+    if(runeCount>0) html += '<span class="rune-bonded-label">'+esc(runeName)+(runeCount>1?' ×'+runeCount:'')+'</span>';
+    html += '</div>';
+    item.runeMods.forEach(function(mod){
+      // Skip Bonded lines
+      if(mod.indexOf('Bonded')>-1 || mod.indexOf('ShamanOnlyMods')>-1) return;
+      // Clean markup tags like [Armour|Armour] → Armour
+      var clean = mod.replace(/\[([^\|]+)\|([^\]]+)\]/g,'$2').replace(/\[([^\]]+)\]/g,'$1');
+      html += '<div class="tt-rune">'+esc(clean)+'</div>';
+    });
+    return html;
+  }
+
+  // ── Item base stat (ES / Armour / Spirit / DPS) ──
+  function baseStat(item){
+    var props = item.properties || [];
+    var stats = [];
+    props.forEach(function(p){
+      var name = p.name || '';
+      var val = (p.values&&p.values[0]) ? p.values[0][0] : '';
+      if(p.type===18) stats.push(['Energy Shield', val]); // ES
+      else if(p.type===16) stats.push(['Armour', val]);
+      else if(p.type===17) stats.push(['Evasion', val]);
+      else if(p.type===25) stats.push(['Spirit', val]);
+      else if(p.type===54) stats.push(['Runic Ward', val]);
+      // Physical Damage range for weapons
+      else if(name==='Physical Damage'||name.indexOf('Damage')>-1&&p.type==null&&val.indexOf('–')>-1){
+        stats.push([name.replace(/\[.*?\|/g,'').replace(/\]/g,''), val]);
+      }
+    });
+    // Quality
+    var qualProp = item.qualityProperty;
+    var qualStr = qualProp ? ' · +'+qualProp+'% Quality' : '';
+    return { stats: stats, quality: qualStr };
+  }
+
+  // ── Build tooltip HTML ───────────────────────────
+  function buildTooltip(item, side){
+    if(!item) return '';
+    var rc = rarityClass(item.frameType);
+    var nameClass = 'tt-'+rc.replace('rarity-','');
+    var bs = baseStat(item);
+    var html = '';
+    // Name
+    html += '<div class="tt-name '+nameClass+'">'+esc(item.name||item.typeLine||'')+'</div>';
+    // Type line
+    var typeStr = esc(item.baseType||item.typeLine||'');
+    if(item.ilvl) typeStr += ' · Item Level: '+item.ilvl;
+    if(bs.quality) typeStr += esc(bs.quality);
+    html += '<div class="tt-type">'+typeStr+'</div>';
+    // Base stats
+    if(bs.stats.length>0){
+      html += '<div class="tt-sep"></div>';
+      bs.stats.forEach(function(s){ html += '<div class="tt-stat">'+esc(s[0])+': <span>'+esc(s[1])+'</span></div>'; });
+    }
+    // Separator
+    html += '<div class="tt-sep"></div>';
+    // Implicits
+    (item.implicitMods||[]).forEach(function(m){
+      html += '<div class="tt-implicit">'+esc(m.replace(/\[([^\|]*)\|([^\]]*)\]/g,'$2').replace(/\[([^\]]*)\]/g,'$1'))+'</div>';
+    });
+    if((item.implicitMods||[]).length>0) html += '<div class="tt-sep"></div>';
+    // Explicit mods
+    (item.explicitMods||[]).forEach(function(m){
+      html += '<div class="tt-mod">'+esc(m.replace(/\[([^\|]*)\|([^\]]*)\]/g,'$2').replace(/\[([^\]]*)\]/g,'$1'))+'</div>';
+    });
+    // Rune block
+    html += runeBlock(item);
+    return html;
+  }
+
+  // ── Build a slot div ─────────────────────────────
+  function buildSlot(item, size, label, side, wrapStyle){
+    var sizeClass = size==='med'?'slot-med':size==='sm'?'slot-sm':size==='flask'?'slot-flask':'';
+    var rc = item ? rarityClass(item.frameType) : '';
+    var dimStyle = size==='tall'?'width:97px;height:210px':size==='belt'?'width:97px;height:75px':'';
+    var slotStyle = dimStyle ? 'style="'+dimStyle+'"' : 'style=""';
+    if(!item){
+      return '<div class="slot '+sizeClass+'" style="'+dimStyle+';border:1px dashed #3d2e14;opacity:0.4"><span class="slot-label">'+esc(label)+'</span></div>';
+    }
+    var tooltipSide = side==='right' ? 'right:92px;top:0;left:auto' : 'left:92px;top:0';
+    if(size==='sm') tooltipSide = side==='right'?'right:82px;top:0;left:auto':'left:82px;top:0';
+    var html = '<div class="slot '+rc+' '+sizeClass+'" '+slotStyle+'>';
+    html += '<div class="c-tl"></div><div class="c-tr"></div><div class="c-bl"></div><div class="c-br"></div>';
+    html += '<img src="'+esc(item.icon||'')+'" onerror="this.style.opacity=\'0.1\'">';
+    html += '<span class="slot-label">'+esc(label)+'</span>';
+    html += '<div class="tooltip" style="'+tooltipSide+'">'+buildTooltip(item, side)+'</div>';
+    html += '</div>';
+    return html;
+  }
+
+  // ── Build flask tooltip with recovery stat ────────
+  function buildFlaskSlot(item, label, side){
+    if(!item){
+      return '<div class="slot slot-flask" style="border:1px dashed #3d2e14;opacity:0.4"><span class="slot-label">'+label+'</span></div>';
+    }
+    var rc = rarityClass(item.frameType);
+    var html = '<div class="slot '+rc+' slot-flask" style="">';
+    html += '<div class="c-tl"></div><div class="c-tr"></div><div class="c-bl"></div><div class="c-br"></div>';
+    html += '<img src="'+esc(item.icon||'')+'" onerror="this.style.opacity=\'0.1\'">';
+    html += '<span class="slot-label">'+esc(label)+'</span>';
+    // Build tooltip
+    var rc2 = rc.replace('rarity-','');
+    var tipHtml = '<div class="tt-name tt-'+rc2+'">'+esc(item.typeLine||'')+'</div>';
+    // type
+    var typeStr = esc(item.baseType||'')+ ' · Item Level: '+(item.ilvl||'?');
+    tipHtml += '<div class="tt-type">'+typeStr+'</div>';
+    // Recovery stat from properties
+    var props = item.properties||[];
+    var recovProp = props.find(function(p){ return p.name&&(p.name.indexOf('Recovers')>-1||p.name.indexOf('Recover')>-1); });
+    if(recovProp && recovProp.values && recovProp.values.length>=2){
+      var amt = recovProp.values[0][0];
+      var time = recovProp.values[1][0];
+      var res = label.indexOf('Mana')>-1?'Mana':'Life';
+      tipHtml += '<div class="tt-sep"></div><div class="tt-stat">Recovers <span>'+esc(amt)+' '+res+'</span> over '+esc(time)+' Seconds</div>';
+    }
+    tipHtml += '<div class="tt-sep"></div>';
+    (item.explicitMods||[]).forEach(function(m){
+      tipHtml += '<div class="tt-mod">'+esc(m)+'</div>';
+    });
+    var tooltipSide = side==='right'?'right:75px;top:0;left:auto':'left:75px;top:0';
+    html += '<div class="tooltip" style="'+tooltipSide+'">'+tipHtml+'</div>';
+    html += '</div>';
+    return html;
+  }
+
+  // ── Map item slots by inventoryId ─────────────────
+  function mapItems(items){
+    var map = {};
+    (items||[]).forEach(function(it){
+      var slot = it.itemSlot;
+      // itemSlot numbers from JSON: 1=Helm, 2=Gloves, 3=Body, 4=Amulet, 5=Boots, 6=Offhand, 7=Weapon, 8=Ring1, 9=Ring2, 11=Belt, 14=Flask
+      if(slot===1) map['helm']=it.itemData;
+      else if(slot===2) map['gloves']=it.itemData;
+      else if(slot===3) map['body']=it.itemData;
+      else if(slot===4) map['amulet']=it.itemData;
+      else if(slot===5) map['boots']=it.itemData;
+      else if(slot===6) map['offhand']=it.itemData;
+      else if(slot===7) map['weapon']=it.itemData;
+      else if(slot===8) map['ring1']=it.itemData;
+      else if(slot===9) map['ring2']=it.itemData;
+      else if(slot===11) map['belt']=it.itemData;
+      else if(slot===14){
+        if(!map['flask1']) map['flask1']=it.itemData;
+        else map['flask2']=it.itemData;
+      }
+    });
+    return map;
+  }
+
+  // ── Build Equipment Panel HTML ────────────────────
+  function buildEquipment(cm, cid){
+    var ds = cm.defensiveStats;
+    var items = mapItems(cm.items);
+    var flasks = cm.flasks||[];
+    var flask1 = flasks[0]?flasks[0].itemData:null;
+    var flask2 = flasks[1]?flasks[1].itemData:null;
+
+    // Charms
+    var charms = (cm.items||[]).filter(function(it){ return it.itemSlot===12||it.itemSlot===13; });
+
+    var fire=ds.fireResistance||0, cold=ds.coldResistance||0;
+    var light=ds.lightningResistance||0, chaos=ds.chaosResistance||0;
+    var arm=ds.armour||0;
+
+    var html = '';
+
+    // ── Sidebar ──
+    html += '<div style="background:var(--surface2);border:1px solid var(--border-gold);border-radius:3px;padding:16px 18px;width:240px;display:flex;flex-direction:column;gap:14px;position:absolute;left:24px;top:12px">';
+    html += '<div><div style="font-family:\'Cinzel\',serif;font-size:18px;color:var(--gold-light);margin-bottom:4px">'+esc(cm.name)+'</div>';
+    html += '<div style="font-size:13px;color:var(--text-muted);line-height:1.6">'+esc(cm.class)+'<br>Level '+cm.level+'<br>'+esc(cm.league)+' · Softcore</div></div>';
+
+    function sidebarSection(title, rows){
+      var s = '<div style="height:1px;background:var(--border-gold)"></div><div>';
+      s += '<div style="font-size:13px;color:var(--gold);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;font-family:\'Cinzel\',serif;font-weight:600">'+title+'</div>';
+      s += '<div style="display:flex;flex-direction:column;gap:5px">';
+      rows.forEach(function(r){ s += '<div style="display:flex;justify-content:space-between;align-items:baseline;column-gap:32px"><span style="font-size:13px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase">'+r[0]+'</span><span style="font-size:15px;color:'+r[2]+'"><span class="num">'+r[1]+'</span></span></div>'; });
+      s += '</div></div>';
+      return s;
+    }
+
+    html += sidebarSection('Resources',[
+      ['Life', n(ds.life||0), 'var(--red)'],
+      ['Energy Shield', n(ds.energyShield||0), 'var(--blue)'],
+      ['Mana', n(ds.mana||0), '#2980b9'],
+      ['Spirit', n(ds.spirit||0), 'var(--gold)'],
+    ]);
+    html += sidebarSection('Defence',[
+      ['Armour', (arm>0?Math.round(arm/100)+'%':'0%'), 'var(--text)'],
+      ['Evasion', (ds.evadeChance||0)+'%', 'var(--text)'],
+      ['Block', (ds.blockChance||0)+'%', 'var(--text)'],
+    ]);
+    html += sidebarSection('Resistances',[
+      ['Fire', pct(fire), resColor('fire',fire)],
+      ['Cold', pct(cold), resColor('cold',cold)],
+      ['Lightning', pct(light), resColor('lightning',light)],
+      ['Chaos', pct(chaos), resColor('chaos',chaos)],
+    ]);
+    html += '</div>';
+
+    // ── Grid ──
+    html += '<div class="eq-box" style="position:absolute;left:50%;transform:translateX(-288px)">';
+    html += '<div style="display:grid;grid-template-columns:108px 82px 108px 82px 108px;grid-template-rows:100px 210px 100px 120px;column-gap:14px;row-gap:36px;align-items:center;justify-items:center">';
+
+    // R1: Helmet
+    html += '<div style="grid-column:3;grid-row:1;align-self:end;justify-self:center">'+buildSlot(items.helm,'med','Helmet','right')+'</div>';
+
+    // R2: Weapon / Ring1 / Body / Amulet+Ring2 / Offhand
+    html += '<div style="grid-column:1;grid-row:2;align-self:center">'+buildSlot(items.weapon,'tall','Weapon','left')+'</div>';
+
+    // Ring1 (bottom of col2)
+    html += '<div style="grid-column:2;grid-row:2;display:flex;flex-direction:column;justify-content:flex-end;height:210px;align-items:center;padding-bottom:8px">'+buildSlot(items.ring1,'sm','Ring','left')+'</div>';
+
+    html += '<div style="grid-column:3;grid-row:2;align-self:center">'+buildSlot(items.body,'tall','Body Armour','right')+'</div>';
+
+    // Amulet (top) + Ring2 (bottom) in col4
+    html += '<div style="grid-column:4;grid-row:2;display:flex;flex-direction:column;justify-content:space-between;height:210px;align-items:center;padding:8px 0">';
+    html += buildSlot(items.amulet,'sm','Amulet','right');
+    html += buildSlot(items.ring2,'sm','Ring','right');
+    html += '</div>';
+
+    html += '<div style="grid-column:5;grid-row:2;align-self:center">'+buildSlot(items.offhand,'tall','Off-hand','right')+'</div>';
+
+    // R3
+    html += '<div style="grid-column:1;grid-row:3;align-self:center">'+buildSlot(items.gloves,'med','Gloves','left')+'</div>';
+    html += '<div style="grid-column:3;grid-row:3;align-self:center">'+buildSlot(items.belt,'belt','Belt','right')+'</div>';
+    html += '<div style="grid-column:5;grid-row:3;align-self:center">'+buildSlot(items.boots,'med','Boots','right')+'</div>';
+
+    // R4: Flask1 / Charms / Flask2
+    html += '<div style="grid-column:1;grid-row:4;align-self:center">'+buildFlaskSlot(flask1,'Life Flask','left')+'</div>';
+
+    // Charms
+    html += '<div style="grid-column:2/5;grid-row:4;display:flex;gap:8px;align-items:center;justify-content:center">';
+    for(var ci=0; ci<3; ci++){
+      var charm = charms[ci]?charms[ci].itemData:null;
+      if(charm){
+        var crc = rarityClass(charm.frameType);
+        html += '<div class="slot '+crc+'" style="width:59px;height:59px;position:relative;cursor:pointer">';
+        html += '<div class="c-tl"></div><div class="c-tr"></div><div class="c-bl"></div><div class="c-br"></div>';
+        html += '<img src="'+esc(charm.icon)+'" onerror="this.style.opacity=\'0.1\'" style="width:88%;height:88%;object-fit:contain">';
+        html += '<div class="tooltip" style="left:62px;top:0">'+buildTooltip(charm,'left')+'</div>';
+        html += '</div>';
+      } else {
+        html += '<div class="slot-charm-empty"><span style="font-size:9px;color:#6a5a42;letter-spacing:1px;text-align:center;line-height:1.5">CHARM<br>SLOT</span></div>';
+      }
+    }
+    html += '</div>';
+
+    html += '<div style="grid-column:5;grid-row:4;align-self:center">'+buildFlaskSlot(flask2,'Mana Flask','right')+'</div>';
+
+    html += '</div></div>'; // /grid /eq-box
+    return html;
+  }
+
+  // ── Build gem tooltip HTML ────────────────────────
+  function buildGemTooltip(gem){
+    var cl = function(s){ return (s||'').replace(/\[([^\|]*)\|([^\]]*)\]/g,'$2').replace(/\[([^\]]*)\]/g,'$1'); };
+    var name = esc(gem.typeLine||gem.baseType||gem.name||'');
+    var tabs = gem.gemTabs||[];
+    var isSupport = gem.support;
+    var props = gem.properties||[];
+    var catProp = props.find(function(p){ return p.name&&p.name.indexOf('Category')>-1; });
+    var category = catProp&&catProp.values&&catProp.values[0]?catProp.values[0][0]:'';
+    var costProp = props.find(function(p){ return p.name&&p.name.indexOf('Cost Multiplier')>-1; });
+    var costMult = costProp&&costProp.values&&costProp.values[0]?costProp.values[0][0]:'';
+
+    var html = '<div class="gem-tt-name">'+name+'</div>';
+    var typeStr = isSupport?'Support Gem':'Active Skill Gem';
+    if(category) typeStr += ' · '+esc(category);
+    html += '<div class="gem-tt-type">'+typeStr+'</div>';
+    html += '<div class="gem-tt-sep"></div>';
+    // Full description
+    var desc = cl(gem.secDescrText||gem.descrText||'');
+    if(desc) html += '<div class="gem-tt-desc">'+esc(desc)+'</div>';
+    // All stats from all tabs/pages
+    var hasStats = false;
+    tabs.forEach(function(tab){
+      (tab.pages||[]).forEach(function(page){
+        var stats = page.stats||[];
+        if(stats.length>0){
+          if(!hasStats){ html += '<div class="gem-tt-sep"></div>'; hasStats=true; }
+          stats.forEach(function(s){
+            if(s&&s.trim()) html += '<div class="gem-tt-stat">• '+esc(cl(s))+'</div>';
+          });
+        }
+      });
+    });
+    // Cost multiplier
+    if(costMult) html += '<div class="gem-tt-stat">• Cost Multiplier: '+esc(costMult)+'</div>';
+    return html;
+  }
+
+  // ── Build Skills Panel HTML ───────────────────────
+  function buildSkills(cm, cid){
+    var skills = cm.skills||[];
+    var prefix = cid==='c1'?'s':cid==='c2'?'j':'t';
+    var html = '<div class="skills-grid">';
+
+    skills.forEach(function(skillGroup, si){
+      var allGems = skillGroup.allGems||[];
+      var mainGem = allGems.find(function(g){ return !g.itemData.support; });
+      if(!mainGem) return;
+      var md = mainGem.itemData;
+      var sid = prefix+si;
+
+      // DPS
+      var dpsData = (skillGroup.dps||[])[0];
+      var dps = dpsData?dpsData.dps:0;
+      var dmgTypes = dpsData?dpsData.damageTypes:[0,0,0,0,0];
+      var dpsColor = '#aaa';
+      if(dmgTypes[0]>50) dpsColor='var(--red)';
+      else if(dmgTypes[1]>30) dpsColor='var(--rare)';
+      else if(dmgTypes[2]>30) dpsColor='#5dade2';
+      else if(dmgTypes[4]>30) dpsColor='#8e44ad';
+      else if(dps>0) dpsColor='var(--green)';
+
+      // Props
+      var props = md.properties||[];
+      var lvlProp = props.find(function(p){ return p.type===5; });
+      var resProp = props.find(function(p){ return p.type===104; });
+      var costProp = props.find(function(p){ return p.name&&p.name.indexOf('Cost')>-1; });
+      var cdProp = props.find(function(p){ return p.name&&p.name.indexOf('Cooldown')>-1; });
+      var level = lvlProp&&lvlProp.values?lvlProp.values[0][0]:'?';
+      var reservation = resProp&&resProp.values?resProp.values[0][0]:'';
+      var cost = costProp&&costProp.values?costProp.values[0][0]:'';
+      var cd = cdProp&&cdProp.values?cdProp.values[0][0]:'';
+
+      var spiritLabel = reservation ? reservation : (cost ? cost : '');
+      var spiritStr = spiritLabel + (level ? ' · Lv '+level : '');
+
+      // Tags from properties[0]
+      var tagsProp = props[0];
+      var tagsRaw = tagsProp&&tagsProp.name?tagsProp.name.replace(/\[([^\|]*)\|([^\]]*)\]/g,'$2').replace(/\[([^\]]*)\]/g,'$1'):'';
+      var tags = tagsRaw ? tagsRaw.split(', ') : [];
+
+      // Skill tooltip — full data from all gemTabs + all pages
+      var skTabs = md.gemTabs||[];
+      var skName = md.typeLine||md.baseType||md.name||'';
+      var skType = tagsRaw+' · Gem Level '+level;
+      var skDesc = (md.secDescrText||md.descrText||'').replace(/\[([^\|]*)\|([^\]]*)\]/g,'$2').replace(/\[([^\]]*)\]/g,'$1');
+      var clean = function(s){ return (s||'').replace(/\[([^\|]*)\|([^\]]*)\]/g,'$2').replace(/\[([^\]]*)\]/g,'$1'); };
+
+      html += '<div class="sk-card" id="'+sid+'">';
+
+      // sk-tooltip
+      html += '<div class="sk-tooltip">';
+      html += '<div class="sk-tt-name">'+esc(skName)+'</div>';
+      html += '<div class="sk-tt-type">'+esc(skType)+'</div>';
+      if(tags.length>0){
+        html += '<div style="margin-bottom:6px">';
+        tags.forEach(function(t){ html += '<span class="sk-tt-tag">'+esc(t)+'</span>'; });
+        html += '</div>';
+      }
+      html += '<div class="sk-tt-sep"></div>';
+      // Main description
+      if(skDesc) html += '<div class="sk-tt-desc">'+esc(skDesc)+'</div>';
+      // All tabs → all pages → properties + stats
+      skTabs.forEach(function(tab){
+        var tabName = tab.name||'';
+        (tab.pages||[]).forEach(function(page){
+          var pageName = page.skillName||'';
+          var label = pageName && pageName!==skName ? pageName : (tabName && tabName!==skName ? tabName : '');
+          // Section label for commands/sub-skills
+          if(label && label.trim()) html += '<div class="sk-tt-sep"></div><div class="sk-tt-mod" style="color:var(--gold);font-family:Cinzel,serif;font-size:12px;letter-spacing:1px">'+esc(label)+'</div>';
+          // Page description
+          if(page.description) html += '<div class="sk-tt-desc">'+esc(clean(page.description))+'</div>';
+          // Page properties (Attack Damage, Cooldown, Cast Time, Crit, etc.)
+          (page.properties||[]).forEach(function(p){
+            var pname = clean(p.name||'');
+            var pval = p.values&&p.values[0]?p.values[0][0]:'';
+            if(pname && pval) html += '<div class="sk-tt-mod">• '+esc(pname)+': '+esc(pval)+'</div>';
+          });
+          // Page stats
+          (page.stats||[]).forEach(function(s){
+            if(s&&s.trim()) html += '<div class="sk-tt-mod">• '+esc(clean(s))+'</div>';
+          });
+        });
+      });
+      // Cooldown/cost from item properties if not already shown
+      if(cd) html += '<div class="sk-tt-sep"></div><div class="sk-tt-mod">• Cooldown: '+esc(cd)+'</div>';
+      if(cost&&!reservation) html += '<div class="sk-tt-mod">• Cost: '+esc(cost)+'</div>';
+      if(reservation) html += '<div class="sk-tt-mod">• Reservation: '+esc(reservation)+'</div>';
+      html += '</div>';
+
+      // sk-header
+      var iconUrl = md.gemSkill || md.icon || '';
+      html += '<div class="sk-header" onclick="tog(\''+sid+'\')">';
+      html += '<img class="sk-icon" src="'+esc(iconUrl)+'">';
+      html += '<div style="flex:1"><div class="sk-name">'+esc(skName)+'</div><div class="sk-tags">'+esc(tagsRaw)+'</div></div>';
+      html += '<div style="text-align:right"><div class="sk-dps" style="color:'+dpsColor+'">'+( dps>0 ? n(dps)+' DPS' : (reservation||'Buff') )+'</div>';
+      html += '<div class="sk-spirit">'+esc(spiritStr)+'</div></div>';
+      html += '<span class="sk-arrow">▼</span></div>';
+
+      // sk-body with support gems
+      html += '<div class="sk-body" id="'+sid+'-b"><div class="sk-inner">';
+      html += '<div class="sup-list">';
+
+      // Support gems (socketed items)
+      var socketed = md.socketedItems||[];
+      socketed.filter(function(g){ return g.support; }).forEach(function(sup){
+        var supIcon = sup.icon||'';
+        var supName = sup.typeLine||sup.baseType||sup.name||'';
+        var supDesc = sup.secDescrText||sup.descrText||'';
+        html += '<div class="sup-item">';
+        html += '<img class="sup-icon" src="'+esc(supIcon)+'">';
+        html += '<div class="gem-tooltip">'+buildGemTooltip(sup)+'</div>';
+        html += '<div><div class="sup-name">'+esc(supName)+'</div>';
+        // Brief desc
+        var tabs = sup.gemTabs||[];
+        var pg = tabs.length>0&&tabs[0].pages&&tabs[0].pages[0]?tabs[0].pages[0]:null;
+        var stats = pg&&pg.stats?pg.stats:[];
+        var brief = stats.slice(0,2).map(function(s){ return s.replace(/\[([^\|]*)\|([^\]]*)\]/g,'$2').replace(/\[([^\]]*)\]/g,'$1'); }).join(' · ');
+        html += '<div class="sup-desc">'+esc(brief)+'</div></div>';
+        html += '</div>';
+      });
+
+      html += '</div>'; // /sup-list
+
+      // Stats box + dmg bar
+      if(dps>0){
+        html += '<div><div class="stats-box">';
+        html += '<div class="stat-row"><span class="stat-lbl">DPS</span><span class="stat-val">'+n(dps)+'</span></div>';
+        if(cd) html += '<div class="stat-row"><span class="stat-lbl">Cooldown</span><span class="stat-val">'+esc(cd)+'</span></div>';
+        if(cost) html += '<div class="stat-row"><span class="stat-lbl">Cost</span><span class="stat-val">'+esc(cost)+'</span></div>';
+        html += '</div>';
+        // Dmg bar
+        var d = dmgTypes; // [total, phys, lightning, cold, fire, chaos]
+        var bars = [];
+        if((d[1]||0)>0) bars.push([d[1],'#c0392b']);
+        if((d[2]||0)>0) bars.push([d[2],'var(--rare)']);
+        if((d[3]||0)>0) bars.push([d[3],'#5dade2']);
+        if((d[4]||0)>0) bars.push([d[4],'#e67e22']);
+        if((d[5]||0)>0) bars.push([d[5],'#8e44ad']);
+        if(bars.length>0){
+          html += '<div class="dmg-bar" style="margin-top:8px">';
+          bars.forEach(function(b){ html += '<div style="width:'+b[0]+'%;background:'+b[1]+'"></div>'; });
+          html += '</div>';
+        }
+        html += '</div>';
+      }
+
+      html += '</div></div>'; // /sk-inner /sk-body
+      html += '</div>'; // /sk-card
+    });
+
+    html += '</div>'; // /skills-grid
+    return html;
+  }
+
+  // ── Build Stats Panel HTML ────────────────────────
+  function buildStats(cm){
+    var ds = cm.defensiveStats;
+    var fire=ds.fireResistance||0, cold=ds.coldResistance||0;
+    var light=ds.lightningResistance||0, chaos=ds.chaosResistance||0;
+    var mov = (ds.movementSpeed||100)-100;
+    var pc = cm.passiveCounts||{};
+
+    function grid(cols, cards){
+      var g = '<div class="stats-grid" style="grid-template-columns:repeat('+cols+',1fr)">';
+      cards.forEach(function(c){ g += '<div class="stat-card"><div class="stat-card-label">'+c[0]+'</div><div class="stat-card-val" style="color:'+c[2]+'">'+c[1]+'</div></div>'; });
+      return g + '</div>';
+    }
+
+    var html = '';
+    html += '<div class="stats-section-title">Life · Energy Shield · Mana · Spirit</div>';
+    html += grid(4,[
+      ['Life',n(ds.life||0),'var(--red)'],
+      ['Energy Shield',n(ds.energyShield||0),'var(--blue)'],
+      ['Mana',n(ds.mana||0),'#2980b9'],
+      ['Spirit',n(ds.spirit||0),'var(--gold)'],
+    ]);
+    html += '<div class="stats-section-title">Defence</div>';
+    html += grid(3,[
+      ['Armour',(ds.armour||0)>0?Math.round((ds.armour||0)/100)+'%':'0%','var(--text)'],
+      ['Evasion Rating',(ds.evadeChance||0)+'%','var(--text)'],
+      ['Block Chance',(ds.blockChance||0)+'%','var(--text)'],
+    ]);
+    html += '<div class="stats-section-title">Resistances</div>';
+    html += grid(4,[
+      ['Fire',pct(fire),resColor('fire',fire)],
+      ['Cold',pct(cold),resColor('cold',cold)],
+      ['Lightning',pct(light),resColor('lightning',light)],
+      ['Chaos',pct(chaos),resColor('chaos',chaos)],
+    ]);
+    html += '<div style="margin-top:16px"><div class="stats-section-title">Attributes &amp; Misc</div>';
+    html += grid(4,[
+      ['Strength',ds.strength||0,'var(--red)'],
+      ['Dexterity',ds.dexterity||0,'var(--green)'],
+      ['Intelligence',ds.intelligence||0,'var(--blue)'],
+      ['Movement Speed',(mov>=0?'+':'')+mov+'%',mov>0?'var(--green)':'var(--text)'],
+      ['Endurance Charges',ds.enduranceCharges||0,'var(--text)'],
+      ['Frenzy Charges',ds.frenzyCharges||0,'var(--text)'],
+      ['Power Charges',ds.powerCharges||0,'var(--text)'],
+      ['Passives',pc.passives||0,'var(--text)'],
+    ]);
+    html += '</div>';
+
+    // Keystones
+    if(cm.keystones&&cm.keystones.length>0){
+      html += '<div style="margin-top:16px"><div class="stats-section-title">Keystones</div>';
+      html += '<div class="stats-grid" style="grid-template-columns:1fr">';
+      cm.keystones.forEach(function(k){
+        html += '<div class="stat-card"><div class="stat-card-label">'+esc(k.name)+'</div>';
+        html += '<div class="stat-card-val" style="color:var(--gold);font-size:14px">'+esc((k.stats||[]).join(' · ').replace(/\[([^\|]*)\|([^\]]*)\]/g,'$2').replace(/\[([^\]]*)\]/g,'$1'))+'</div></div>';
+      });
+      html += '</div></div>';
+    }
+
+    return html;
+  }
+
+  // ── Main render function ──────────────────────────
+  function render(cm, cid){
+    var eqPanel = document.getElementById(cid+'-eq');
+    var skPanel = document.getElementById(cid+'-sk');
+    var stPanel = document.getElementById(cid+'-st');
+
+    if(eqPanel) eqPanel.innerHTML = buildEquipment(cm, cid);
+    if(skPanel) skPanel.innerHTML = buildSkills(cm, cid);
+    if(stPanel) stPanel.innerHTML = buildStats(cm);
+
+    // Update char tab
+    var tabs = document.querySelectorAll('.char-tab');
+    var cidx = ['c1','c2','c3'].indexOf(cid);
+    if(tabs[cidx]){
+      var meta = tabs[cidx].querySelector('.ct-meta');
+      if(meta) meta.textContent = (cm.class||'')+' · Lv '+(cm.level||'?');
+      var name = tabs[cidx].querySelector('.ct-name');
+      if(name) name.textContent = cm.name||'';
+    }
+  }
+
+  return { render: render };
+
+})();
+
+
+
+// ── ADMIN PANEL ──
+var ADMIN_PWD = 'irrepressible';
+var CHAR_IDS = ['c1','c2','c3','c4'];
+
+function adminOpen(){ document.getElementById('admin-overlay').classList.add('open'); document.getElementById('admin-pwd').focus(); }
+function adminClose(){ document.getElementById('admin-overlay').classList.remove('open'); }
+function adminBgClose(e){ if(e.target===document.getElementById('admin-overlay')) adminClose(); }
+
+function adminLogin(){
+  var pwd = document.getElementById('admin-pwd').value;
+  if(pwd === ADMIN_PWD){
+    document.getElementById('admin-login').style.display='none';
+    document.getElementById('admin-body').style.display='flex';
+    document.getElementById('admin-err').style.display='none';
+  } else {
+    document.getElementById('admin-err').style.display='block';
+    document.getElementById('admin-pwd').value='';
+  }
+}
+
+function adminTab(idx, el){
+  document.querySelectorAll('.admin-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.admin-section').forEach(s=>s.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('adm-'+idx).classList.add('active');
+}
+
+function adminClear(idx){
+  document.getElementById('json-'+idx).value='';
+  document.getElementById('status-'+idx).className='admin-status';
+  document.getElementById('preview-'+idx).style.display='none';
+}
+
+// Color helpers
+function resColor(val, type){
+  if(type==='fire') return '#e67e22';
+  if(type==='cold') return '#5dade2';
+  if(type==='lightning') return 'var(--rare)';
+  if(type==='chaos') return 'var(--red)';
+  if(val>0) return 'var(--green)';
+  if(val<0) return 'var(--red)';
+  return 'var(--text)';
+}
+
+function numFormat(n){ return n.toLocaleString('es-ES'); }
+
+function adminParse(idx){
+  var raw = document.getElementById('json-'+idx).value.trim();
+  var statusEl = document.getElementById('status-'+idx);
+  var previewEl = document.getElementById('preview-'+idx);
+  var gridEl = document.getElementById('preview-grid-'+idx);
+
+  if(!raw){ statusEl.textContent='Pega el JSON primero'; statusEl.className='admin-status err'; return; }
+
+  var data;
+  try { data = JSON.parse(raw); }
+  catch(e){ statusEl.textContent='JSON inválido: '+e.message; statusEl.className='admin-status err'; return; }
+
+  var cm = data.charModel;
+  if(!cm || !cm.defensiveStats){ statusEl.textContent='Estructura JSON no reconocida'; statusEl.className='admin-status err'; return; }
+
+  var cid = ['c1','c2','c3','c4'][idx];
+
+  try {
+    EV.render(cm, cid);
+  } catch(e){
+    statusEl.textContent = 'Error al renderizar: '+e.message;
+    statusEl.className = 'admin-status err';
+    console.error('EV.render error:', e);
+    return;
+  }
+
+  // Preview
+  var ds = cm.defensiveStats;
+  var pct = function(v){ return (v>0?'+':'')+v+'%'; };
+  var items = [
+    ['Personaje', (cm.name||'?')+' — '+(cm.class||'?')+' Lv '+(cm.level||'?')],
+    ['Life', (ds.life||0).toLocaleString('es-ES')],
+    ['Energy Shield', (ds.energyShield||0).toLocaleString('es-ES')],
+    ['Mana', (ds.mana||0).toLocaleString('es-ES')],
+    ['Spirit', (ds.spirit||0).toLocaleString('es-ES')],
+    ['Fire Res', pct(ds.fireResistance||0)],
+    ['Cold Res', pct(ds.coldResistance||0)],
+    ['Lightning Res', pct(ds.lightningResistance||0)],
+    ['Chaos Res', pct(ds.chaosResistance||0)],
+  ];
+  gridEl.innerHTML = items.map(function(it){
+    return '<div class="preview-item">'+it[0]+': <span>'+it[1]+'</span></div>';
+  }).join('');
+  previewEl.style.display = 'block';
+
+  statusEl.textContent = '✓ '+cm.name+' cargado correctamente';
+  statusEl.className = 'admin-status ok';
+  setTimeout(function(){ statusEl.className='admin-status'; }, 5000);
+}
+
+
+
+function switchChar(id, el) {
+  document.querySelectorAll('.char-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.char-panel').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById(id).classList.add('active');
+}
+function switchInner(char, tab, el) {
+  var panel = document.getElementById(char);
+  panel.querySelectorAll('.inner-tab').forEach(t => t.classList.remove('active'));
+  panel.querySelectorAll('.inner-panel').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById(char + '-' + tab).classList.add('active');
+}
+function tog(id) {
+  document.getElementById(id).classList.toggle('open');
+  var b = document.getElementById(id + '-b');
+  if(b) b.classList.toggle('open');
+}
+
+</script>
+</body>
+</html>
